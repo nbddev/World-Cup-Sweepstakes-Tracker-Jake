@@ -789,11 +789,20 @@ class Component extends DCLogic {
       return { flag:t.flag, flagUrl:t.flagUrl, name:t.name, owner:ow?ow.name:'', ownerColor:ow?ow.color:'' };
     };
 
+    // Badge shown whenever either side of a fixture is owned by Nate or Jake —
+    // both-owned games get the louder clash/owns-both text, single-owned games
+    // still get a green bubble flagging whose team it is.
+    const ownerBadge = (H, A) => {
+      if (H.owner && A.owner && H.owner === A.owner) return { show:true, text:`🎭 ${H.owner} owns both` };
+      if (H.owner && A.owner) return { show:true, text:`🔥 ${H.owner} vs ${A.owner}` };
+      if (H.owner || A.owner) return { show:true, text:`🟢 ${H.owner || A.owner}'s team` };
+      return { show:false, text:'' };
+    };
+
     const mkGame = (f) => {
       const [h,a,hs,as,grp,_date,status] = f;
       const H = getSide(h), A = getSide(a);
-      const clash      = !!(H.owner && A.owner && H.owner !== A.owner);
-      const sameOwner  = !!(H.owner && A.owner && H.owner === A.owner);
+      const badge      = ownerBadge(H, A);
       const isLive     = status === 'LIVE';
       const stageLabel = grp.length===1 ? `Group ${grp}` : (STAGE_LABELS[grp]||grp);
       return {
@@ -802,8 +811,8 @@ class Component extends DCLogic {
         scoreColor: isLive ? '#16a34a' : '#13241b',
         statusLabel: isLive ? `🟢 ${stageLabel}` : `FT · ${stageLabel}`,
         statusColor: isLive ? '#16a34a' : '#9aa39b',
-        clash: clash || sameOwner,
-        clashText: sameOwner ? `🎭 ${H.owner} owns both` : clash ? `🔥 ${H.owner} vs ${A.owner}` : '',
+        clash: badge.show,
+        clashText: badge.text,
       };
     };
 
@@ -837,16 +846,15 @@ class Component extends DCLogic {
     const rawUp = (liveData && liveData.upcoming) ? liveData.upcoming : [];
     const mkUpcoming = (u) => {
       const H = getSide(u.h), A = getSide(u.a);
-      const clash     = !!(H.owner && A.owner && H.owner !== A.owner);
-      const sameOwner = !!(H.owner && A.owner && H.owner === A.owner);
+      const badge = ownerBadge(H, A);
       const stageLabel = u.g.length === 1 ? `Group ${u.g}` : (STAGE_LABELS[u.g] || u.g);
       const time = new Date(u.utc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       return {
         home: H, away: A,
         score: time, scoreColor: '#0a4d2c',
         statusLabel: `⏱ ${stageLabel}`, statusColor: '#9aa39b',
-        clash: clash || sameOwner,
-        clashText: sameOwner ? `🎭 ${H.owner} owns both` : clash ? `🔥 ${H.owner} vs ${A.owner}` : '',
+        clash: badge.show,
+        clashText: badge.text,
       };
     };
     const upOrder = [], upByDate = {};
