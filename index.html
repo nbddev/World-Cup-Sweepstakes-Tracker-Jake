@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./support.js"></script>
+
+<!-- ===== PASSWORD GATE ===== -->
+<style>
+#pg-overlay{position:fixed;inset:0;z-index:9999;background:#0a4d2c;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',system-ui,sans-serif;}
+#pg-box{width:100%;max-width:380px;padding:40px 32px;text-align:center;}
+#pg-logo{width:56px;height:56px;border-radius:50%;background:#f2b705;display:inline-flex;align-items:center;justify-content:center;font-size:32px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);margin-bottom:18px;}
+#pg-title{font-family:'Anton',sans-serif;font-size:26px;letter-spacing:.5px;text-transform:uppercase;color:#f4f2e9;line-height:1.1;margin-bottom:6px;}
+#pg-sub{font-size:13px;color:rgba(244,242,233,.6);font-weight:600;margin-bottom:28px;}
+#pg-input{width:100%;padding:14px 16px;border-radius:12px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#f4f2e9;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;outline:none;text-align:center;letter-spacing:2px;transition:border-color .2s;}
+#pg-input:focus{border-color:#f2b705;}
+#pg-input::placeholder{letter-spacing:0;color:rgba(244,242,233,.35);}
+#pg-btn{margin-top:14px;width:100%;padding:14px;border-radius:12px;border:none;background:#f2b705;color:#0a4d2c;font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;cursor:pointer;transition:opacity .15s;}
+#pg-btn:hover{opacity:.88;}
+#pg-btn:disabled{opacity:.5;cursor:not-allowed;}
+#pg-error{margin-top:14px;color:#fca5a5;font-size:13px;font-weight:700;display:none;}
+</style>
+
+<div id="pg-overlay">
+  <div id="pg-box">
+    <div id="pg-logo">⚽</div>
+    <div id="pg-title">World Cup Sweepstakes</div>
+    <div id="pg-sub">Enter the password to access the sweepstakes</div>
+    <input id="pg-input" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="pg-btn">Enter →</button>
+    <div id="pg-error">Wrong password — try again</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById('pg-overlay');
+  var input   = document.getElementById('pg-input');
+  var btn     = document.getElementById('pg-btn');
+  var errMsg  = document.getElementById('pg-error');
+
+  // If already authenticated this session, hide immediately (no flash)
+  if (localStorage.getItem('swp_auth')) {
+    overlay.style.display = 'none';
+  }
+
+  function submit() {
+    var pw = input.value.trim();
+    if (!pw) return;
+    btn.disabled = true;
+    errMsg.style.display = 'none';
+    fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          localStorage.setItem('swp_auth', data.token);
+          overlay.style.display = 'none';
+        } else {
+          errMsg.style.display = 'block';
+          input.value = '';
+          input.focus();
+          btn.disabled = false;
+        }
+      })
+      .catch(function () {
+        errMsg.textContent = 'Network error — check your connection';
+        errMsg.style.display = 'block';
+        btn.disabled = false;
+      });
+  }
+
+  btn.addEventListener('click', submit);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+})();
+</script>
+<!-- ===== END PASSWORD GATE ===== -->
+
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  ::-webkit-scrollbar{height:10px;width:10px}
+  ::-webkit-scrollbar-thumb{background:#cdd3c8;border-radius:8px}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#f4f2e9;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#13241b;">
+
+  <!-- ===== HERO / NAV ===== -->
+  <div style="background:#0a4d2c;color:#f4f2e9;background-image:radial-gradient(circle at 12% 20%,rgba(255,255,255,.06),transparent 40%),radial-gradient(circle at 88% 0%,rgba(255,255,255,.05),transparent 45%);">
+    <div style="max-width:1180px;margin:0 auto;padding:22px 24px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:13px;">
+          <div style="width:46px;height:46px;border-radius:50%;background:#f2b705;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);">⚽</div>
+          <div>
+            <div style="font-family:'Anton',sans-serif;font-size:23px;letter-spacing:.5px;line-height:1.05;text-transform:uppercase;white-space:nowrap;">{{ leagueName }}</div>
+            <div style="font-size:12.5px;opacity:.7;font-weight:600;margin-top:5px;">Nate vs Jake · 16 teams · World Cup 2026</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:22px;align-items:stretch;">
+          <div style="text-align:right;">
+            <div style="font-size:11px;letter-spacing:1.5px;opacity:.65;font-weight:700;text-transform:uppercase;">Leading 👑</div>
+            <div style="font-family:'Anton',sans-serif;font-size:30px;line-height:1;">{{ leaderName }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;padding-bottom:2px;">
+        <button onClick="{{ goSquad }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">The Draw<sc-if value="{{ isSquad }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">The Draw</span></sc-if></button>
+        <button onClick="{{ goTable }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">Leaderboard<sc-if value="{{ isTable }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">Leaderboard</span></sc-if></button>
+        <button onClick="{{ goScores }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">Scores<sc-if value="{{ isScores }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">Scores</span></sc-if></button>
+        <button onClick="{{ goGroups }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">Groups<sc-if value="{{ isGroups }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">Groups</span></sc-if></button>
+        <button onClick="{{ goBracket }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">Bracket<sc-if value="{{ isBracket }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">Bracket</span></sc-if></button>
+        <button onClick="{{ goScorers }}" style="position:relative;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px;padding:11px 18px;border:none;cursor:pointer;border-radius:11px 11px 0 0;white-space:nowrap;background:rgba(255,255,255,.08);color:#cfe6d8;overflow:hidden;">Golden Boot<sc-if value="{{ isScorers }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f2e9;color:#0a4d2c;border-radius:11px 11px 0 0;">Golden Boot</span></sc-if></button>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 60px;">
+
+    <!-- ===== LOADING STATE ===== -->
+    <sc-if value="{{ isLoading }}">
+      <div style="text-align:center;padding:80px 20px;color:#6f7a6f;">
+        <div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;">⚽</div>
+        <div style="font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.5px;text-transform:uppercase;color:#0a4d2c;">Loading scores…</div>
+        <div style="font-size:13px;font-weight:600;margin-top:8px;">Fetching live data from the tournament</div>
+      </div>
+    </sc-if>
+
+    <!-- ===== THE DRAW ===== -->
+    <sc-if value="{{ isSquad }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+        <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0;text-transform:uppercase;letter-spacing:.5px;">The Draw</h2>
+        <div style="font-size:13px;color:#6f7a6f;font-weight:600;">Each drafted 8 teams (2 per pot) + one footballer per team · drafted 7 June 2026</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-top:18px;">
+        <sc-for list="{{ squadPlayers }}" as="p" hint-placeholder-count="2">
+          <div style="{{ p.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px dashed #e3e0d3;">
+              <div style="{{ p.rankStyle }}">{{ p.rankLabel }}</div>
+              <div style="width:11px;height:11px;border-radius:50%;flex:none;background:{{ p.color }};"></div>
+              <div style="font-weight:800;font-size:18px;flex:1;">{{ p.name }}</div>
+              <div style="text-align:right;line-height:1;">
+                <div style="font-family:'Anton',sans-serif;font-size:28px;">{{ p.totalStr }}</div>
+                <div style="font-size:10px;letter-spacing:1px;color:#6f7a6f;font-weight:700;">PTS</div>
+              </div>
+            </div>
+            <div style="padding:6px 16px 14px;">
+              <sc-for list="{{ p.teams }}" as="tm" hint-placeholder-count="8">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+                  <div style="{{ tm.flagDivStyle }}"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:15px;white-space:nowrap;">{{ tm.name }}</div>
+                    <div style="font-size:12px;font-weight:700;margin-top:4px;color:{{ tm.statusColor }};">{{ tm.statusLabel }}</div>
+                    <div style="font-size:12px;font-weight:600;margin-top:3px;color:#6f7a6f;white-space:nowrap;">{{ tm.playerName }} <span style="color:#9aa39b;">· {{ tm.playerPtsStr }}</span></div>
+                  </div>
+                  <div style="text-align:right;flex:none;">
+                    <div style="font-family:'Anton',sans-serif;font-size:19px;">{{ tm.ptsStr }}</div>
+                    <div style="font-size:9px;letter-spacing:1px;color:#9aa39b;font-weight:700;">PTS</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- ===== HOW THE POINTS WORK ===== -->
+      <div style="margin-top:26px;background:#fbfaf3;border:1px solid #e3e0d3;border-radius:16px;padding:20px 22px;">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;">
+          <span style="font-size:20px;">📋</span>
+          <span style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;">How the points work</span>
+        </div>
+        <div style="font-size:13.5px;color:#3c463c;font-weight:600;margin-bottom:18px;line-height:1.6;">Each side drafts <b>8 teams</b> (2 from every pot) and picks <b>one footballer</b> from each squad. Points come from both the team's results <i>and</i> that player's individual stats.</div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start;">
+
+        <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;overflow:hidden;">
+          <div style="padding:12px 18px;background:#11713f;color:#cfe6d8;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:.8px;text-transform:uppercase;">Team Points</div>
+          <div style="padding:6px 18px 10px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:22px;width:28px;text-align:center;">🏅</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Group-stage win</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">3 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:22px;width:28px;text-align:center;">🤝</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Group-stage draw</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">1 pt</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:22px;width:28px;text-align:center;">🧱</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Clean sheet</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">1 pt</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;">
+              <span style="font-size:22px;width:28px;text-align:center;">⚽</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Team goal scored</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">1 pt</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;overflow:hidden;">
+          <div style="padding:12px 18px;background:#11713f;color:#cfe6d8;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:.8px;text-transform:uppercase;">Knockout Rounds</div>
+          <div style="padding:6px 18px 10px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">⚽</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Round of 32</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">2 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🔥</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Round of 16</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">3 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">💥</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Quarter-final</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">5 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🌟</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Semi-final</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">8 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🥈</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Runner-up</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#fdeed1;color:#9a6b04;padding:3px 12px;border-radius:8px;white-space:nowrap;">12 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;">
+              <span style="font-size:20px;width:28px;text-align:center;">🏆</span>
+              <span style="flex:1;font-weight:800;font-size:15px;">Winner</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#f2b705;color:#0a4d2c;padding:3px 12px;border-radius:8px;white-space:nowrap;">20 pts</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;overflow:hidden;">
+          <div style="padding:12px 18px;background:#11713f;color:#cfe6d8;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:.8px;text-transform:uppercase;">Player Points</div>
+          <div style="padding:6px 18px 10px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">📋</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Starts match</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">1 pt</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">⚽</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Goal</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">4 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🎯</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Assist</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">3 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🌟</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Player of the Match</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;">3 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🟨</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Yellow card</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#fdeeee;color:#b0312c;padding:3px 12px;border-radius:8px;white-space:nowrap;">−1 pt</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0eee3;">
+              <span style="font-size:20px;width:28px;text-align:center;">🟥</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Red card</span>
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#fdeeee;color:#b0312c;padding:3px 12px;border-radius:8px;white-space:nowrap;">−3 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
+              <span style="font-size:20px;width:28px;text-align:center;">🧱</span>
+              <span style="flex:1;font-weight:700;font-size:15px;">Clean sheet bonus</span>
+              <span style="font-family:'Anton',sans-serif;font-size:13px;background:#eef5ef;color:#11713f;padding:3px 12px;border-radius:8px;white-space:nowrap;text-align:right;">GK/DEF +2 · MID +1 · FWD 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;background:#0a4d2c;color:#f4f2e9;border-radius:16px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
+        <span style="font-size:34px;line-height:1;">🏆</span>
+        <div>
+          <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">Winning it</div>
+          <div style="font-size:14.5px;line-height:1.6;opacity:.92;">Highest combined team + player points total at the end takes <b style="color:#f2b705;">bragging rights</b>. If it's a tie, whoever owns the <b style="color:#f2b705;">winning team</b> takes it.</div>
+        </div>
+      </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===== LEADERBOARD ===== -->
+    <sc-if value="{{ isTable }}">
+    <div>
+      <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0 0 18px;text-transform:uppercase;letter-spacing:.5px;">Leaderboard</h2>
+      <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.02);">
+        <div style="display:grid;grid-template-columns:46px 1fr auto;gap:12px;padding:11px 18px;background:#0a4d2c;color:#cfe6d8;font-size:11px;letter-spacing:1.2px;font-weight:800;text-transform:uppercase;">
+          <div>Rank</div><div>Player &amp; Teams</div><div style="text-align:right;">Points</div>
+        </div>
+        <sc-for list="{{ board }}" as="r" hint-placeholder-count="2">
+          <div style="{{ r.rowStyle }}">
+            <div style="font-family:'Anton',sans-serif;font-size:22px;display:flex;align-items:center;">{{ r.rankLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <div style="width:10px;height:10px;border-radius:50%;flex:none;background:{{ r.color }};"></div>
+                <span style="font-weight:800;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.name }}</span>
+                <span style="{{ r.tieStyle }}">{{ r.tieLabel }}</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px 14px;">
+                <sc-for list="{{ r.teamsList }}" as="t" hint-placeholder-count="8">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="{{ t.flagDivStyle }}"></div>
+                    <span style="font-size:12px;font-weight:700;color:#3c463c;white-space:nowrap;">{{ t.name }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="text-align:right;font-family:'Anton',sans-serif;font-size:24px;align-self:center;">{{ r.totalStr }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:#fff;border:1px solid #e3e0d3;border-radius:14px;padding:16px 18px;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:10px;">How points are won</div>
+          <div style="font-size:13.5px;line-height:1.9;color:#3c463c;">🏅 Group win <b>3</b> · 🤝 Draw <b>1</b> · 🧱 Clean sheet <b>1</b> · ⚽ Team goal <b>1</b> · R32 <b>+2</b> · R16 <b>+3</b> · QF <b>+5</b> · SF <b>+8</b> · Final <b>+12</b> · Winner <b>+20</b> — plus the drafted player's own goals/assists/POTM/cards.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e3e0d3;border-radius:14px;padding:16px 18px;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:10px;">Tiebreak</div>
+          <div style="font-size:13.5px;line-height:1.7;color:#3c463c;">Highest combined total at the end wins. If level, whoever owns the <b>winning team</b> takes it. {{ tiebreakNote }}</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===== SCORES ===== -->
+    <sc-if value="{{ isScores }}">
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+        <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0;text-transform:uppercase;letter-spacing:.5px;">Scores</h2>
+        <button onClick="{{ onRefresh }}" style="{{ refreshStyle }}">{{ refreshLabel }}</button>
+      </div>
+      <div style="font-size:13px;color:#6f7a6f;font-weight:600;margin-bottom:18px;">{{ scoreSubtitle }}</div>
+
+      <sc-if value="{{ hasUpcoming }}">
+      <div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:9px;margin:0 0 14px;">
+          <span style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;color:#0a4d2c;">⏱ Upcoming</span>
+          <span style="flex:1;height:2px;background:#e3e0d3;"></span>
+        </div>
+        <sc-for list="{{ upcomingDays }}" as="day" hint-placeholder-count="3">
+          <div style="margin-bottom:18px;">
+            <div style="display:flex;align-items:center;gap:9px;margin:0 0 11px;">
+              <span style="font-family:'Anton',sans-serif;font-size:16px;letter-spacing:.5px;text-transform:uppercase;">{{ day.date }}</span>
+              <span style="flex:1;height:1px;background:#e3e0d3;"></span>
+            </div>
+            <div style="display:grid;gap:10px;">
+              <sc-for list="{{ day.games }}" as="g" hint-placeholder-count="3">
+                <dc-import name="FixtureRow" g="{{ g }}" hint-size="100%,76px"></dc-import>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin:0 0 14px;">
+        <span style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;color:#0a4d2c;">✅ Results</span>
+        <span style="flex:1;height:2px;background:#e3e0d3;"></span>
+      </div>
+      </sc-if>
+
+      <sc-for list="{{ scoreDays }}" as="day" hint-placeholder-count="8">
+        <div style="margin-bottom:22px;">
+          <div style="display:flex;align-items:center;gap:9px;margin:0 0 11px;">
+            <span style="font-family:'Anton',sans-serif;font-size:16px;letter-spacing:.5px;text-transform:uppercase;">{{ day.date }}</span>
+            <span style="{{ day.latestStyle }}">{{ day.latestLabel }}</span>
+            <span style="{{ day.liveStyle }}">{{ day.liveLabel }}</span>
+            <span style="flex:1;height:1px;background:#e3e0d3;"></span>
+          </div>
+          <div style="display:grid;gap:10px;">
+            <sc-for list="{{ day.games }}" as="g" hint-placeholder-count="3">
+              <dc-import name="FixtureRow" g="{{ g }}" hint-size="100%,76px"></dc-import>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noScores }}">
+        <div style="background:#fbfaf3;border:1px dashed #d8d5c7;border-radius:14px;padding:18px 20px;text-align:center;font-size:13.5px;color:#6f7a6f;font-weight:600;">⏳ No results yet — check back when the first matches kick off.</div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ===== GROUPS ===== -->
+    <sc-if value="{{ isGroups }}">
+    <div>
+      <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.5px;">Group Stage</h2>
+      <div style="font-size:13px;color:#6f7a6f;font-weight:600;margin-bottom:20px;">{{ groupsSubtitle }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;">
+        <sc-for list="{{ groups }}" as="grp" hint-placeholder-count="12">
+          <div style="background:#fff;border:1px solid #e3e0d3;border-radius:14px;overflow:hidden;">
+            <div style="padding:11px 15px;background:#11713f;color:#fff;display:flex;align-items:center;gap:9px;">
+              <span style="font-family:'Anton',sans-serif;font-size:18px;background:#f2b705;color:#0a4d2c;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;">{{ grp.letter }}</span>
+              <span style="font-weight:800;font-size:14px;letter-spacing:.5px;">Group {{ grp.letter }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:18px 1fr 20px 20px 20px 20px 26px 30px;gap:5px;padding:8px 13px 4px;font-size:10px;font-weight:800;letter-spacing:.3px;color:#9aa39b;">
+              <div></div><div></div><div style="text-align:center;">P</div><div style="text-align:center;">W</div><div style="text-align:center;">D</div><div style="text-align:center;">L</div><div style="text-align:center;">GD</div><div style="text-align:right;">PTS</div>
+            </div>
+            <sc-for list="{{ grp.rows }}" as="row" hint-placeholder-count="4">
+              <div style="{{ row.rowStyle }}">
+                <div style="font-weight:800;font-size:12px;color:{{ row.markColor }};">{{ row.pos }}</div>
+                <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                  <div style="{{ row.flagDivStyle }}"></div>
+                  <span style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ row.name }}</span>
+                  <span style="{{ row.ownerStyle }}">{{ row.ownerLabel }}</span>
+                </div>
+                <div style="text-align:center;font-size:12.5px;color:#6f7a6f;">{{ row.MP }}</div>
+                <div style="text-align:center;font-size:12.5px;">{{ row.W }}</div>
+                <div style="text-align:center;font-size:12.5px;">{{ row.D }}</div>
+                <div style="text-align:center;font-size:12.5px;">{{ row.L }}</div>
+                <div style="text-align:center;font-size:12.5px;color:#6f7a6f;">{{ row.GD }}</div>
+                <div style="text-align:right;font-weight:800;font-size:14px;">{{ row.Pts }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===== BRACKET ===== -->
+    <sc-if value="{{ isBracket }}">
+    <div>
+      <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.5px;">Knockout Bracket</h2>
+      <div style="font-size:13px;color:#6f7a6f;font-weight:600;margin-bottom:20px;">{{ bracketSubtitle }}</div>
+
+      <sc-if value="{{ bracketLive }}">
+        <sc-for list="{{ bracketRounds }}" as="rd" hint-placeholder-count="6">
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 12px;">
+              <span style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;color:#0a4d2c;">{{ rd.label }}</span>
+              <span style="font-size:11px;font-weight:700;color:#9aa39b;">{{ rd.sub }}</span>
+              <span style="flex:1;height:2px;background:#e3e0d3;"></span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px;">
+              <sc-for list="{{ rd.ties }}" as="t" hint-placeholder-count="4">
+                <div style="{{ t.cardStyle }}">
+                  <div style="display:flex;align-items:center;gap:9px;padding:3px 0;">
+                    <div style="{{ t.homeFlagStyle }}"></div>
+                    <span style="{{ t.homeNameStyle }}">{{ t.homeName }}</span>
+                    <span style="{{ t.homeOwnerStyle }}">{{ t.homeOwner }}</span>
+                    <span style="{{ t.homeScoreStyle }}">{{ t.homeScore }}</span>
+                  </div>
+                  <div style="height:1px;background:#f0eee3;margin:2px 0;"></div>
+                  <div style="display:flex;align-items:center;gap:9px;padding:3px 0;">
+                    <div style="{{ t.awayFlagStyle }}"></div>
+                    <span style="{{ t.awayNameStyle }}">{{ t.awayName }}</span>
+                    <span style="{{ t.awayOwnerStyle }}">{{ t.awayOwner }}</span>
+                    <span style="{{ t.awayScoreStyle }}">{{ t.awayScore }}</span>
+                  </div>
+                  <div style="{{ t.metaStyle }}">{{ t.metaLabel }}</div>
+                  <div style="{{ t.clashStyle }}">{{ t.clashText }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ bracketLocked }}">
+      <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;padding:48px 28px;text-align:center;">
+        <div style="font-size:42px;margin-bottom:10px;">🔒</div>
+        <div style="font-family:'Anton',sans-serif;font-size:24px;text-transform:uppercase;letter-spacing:.5px;">To be decided</div>
+        <div style="font-size:14px;color:#6f7a6f;font-weight:600;margin-top:8px;line-height:1.6;">Group stage in progress — the Round of 32 is still up for grabs.</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:24px;">
+          <sc-for list="{{ roundNames }}" as="r" hint-placeholder-count="5">
+            <span style="font-family:'Anton',sans-serif;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#aab4a8;background:#f0eee3;border:1px dashed #d8d5c7;padding:7px 12px;border-radius:8px;">{{ r }}</span>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ===== GOLDEN BOOT ===== -->
+    <sc-if value="{{ isScorers }}">
+    <div>
+      <h2 style="font-family:'Anton',sans-serif;font-size:30px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.5px;">Golden Boot</h2>
+      <div style="font-size:13px;color:#6f7a6f;font-weight:600;margin-bottom:20px;">{{ scorersSubtitle }}</div>
+      <sc-if value="{{ hasScorers }}">
+      <div style="background:#fff;border:1px solid #e3e0d3;border-radius:16px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.02);">
+        <div style="display:grid;grid-template-columns:42px 1fr auto;gap:12px;padding:11px 18px;background:#0a4d2c;color:#cfe6d8;font-size:11px;letter-spacing:1.2px;font-weight:800;text-transform:uppercase;">
+          <div>#</div><div>Player</div><div style="text-align:right;">Goals</div>
+        </div>
+        <sc-for list="{{ scorersList }}" as="s" hint-placeholder-count="10">
+          <div style="{{ s.rowStyle }}">
+            <div style="font-family:'Anton',sans-serif;font-size:20px;display:flex;align-items:center;">{{ s.rankLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:5px;min-width:0;">
+              <span style="font-weight:800;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.name }}</span>
+              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                <div style="{{ s.flagDivStyle }}"></div>
+                <span style="font-size:12px;font-weight:700;color:#3c463c;white-space:nowrap;">{{ s.teamName }}</span>
+                <span style="{{ s.ownerStyle }}">{{ s.ownerLabel }}</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Anton',sans-serif;font-size:24px;color:#0a4d2c;">{{ s.goals }}</div>
+              <div style="font-size:9px;letter-spacing:1px;color:#9aa39b;font-weight:700;">GOALS</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-if value="{{ noScorers }}">
+        <div style="background:#fbfaf3;border:1px dashed #d8d5c7;border-radius:14px;padding:18px 20px;text-align:center;font-size:13.5px;color:#6f7a6f;font-weight:600;">⚽ No goals yet — the Golden Boot race kicks off with the first match.</div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820},&quot;leagueName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;World Cup Sweepstakes&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;defaultTab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;squad&quot;,&quot;options&quot;:[&quot;squad&quot;,&quot;table&quot;,&quot;scores&quot;,&quot;groups&quot;,&quot;bracket&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { tab: null, liveData: null, loading: true, refreshing: false };
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+  componentDidMount() {
+    this.fetchScores();
+    this._poll = setInterval(() => this.fetchScores(), 60000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._poll);
+  }
+
+  async fetchScores() {
+    try {
+      const res = await fetch('/.netlify/functions/scores');
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      this.setState({ liveData: data, loading: false, refreshing: false });
+    } catch (e) {
+      this.setState({ loading: false, refreshing: false });
+    }
+  }
+
+  refreshScores() {
+    if (this.state.refreshing) return;
+    this.setState({ refreshing: true });
+    this.fetchScores();
+  }
+
+  // ── Static data ────────────────────────────────────────────────────────────
+
+  build() {
+    const P = {
+      nate:{name:'Nate',color:'#4d7c0f'}, jake:{name:'Jake',color:'#e4572e'},
+    };
+
+    // Manually-maintained running totals for each drafted footballer.
+    // Update these after each matchday and redeploy (push to main) — no free
+    // API covers starts/assists/POTM/cards, so this is entered by hand.
+    // clean sheets here = times the player's TEAM kept a clean sheet while they played.
+    const PLAYER_STATS = {
+      ENG:{ name:'Harry Kane',          position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      ESP:{ name:'Lamine Yamal',        position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      COL:{ name:'Luis Díaz',           position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      URU:{ name:'Federico Valverde',   position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      NOR:{ name:'Erling Haaland',      position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      EGY:{ name:'Mohamed Salah',       position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      SWE:{ name:'Victor Lindelöf',     position:'DEF', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      GHA:{ name:'Antoine Semenyo',     position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      FRA:{ name:'Kylian Mbappé',       position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      POR:{ name:'Bruno Fernandes',     position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      MAR:{ name:'Achraf Hakimi',       position:'DEF', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      SEN:{ name:'Idrissa Gana Gueye',  position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      SCO:{ name:'Scott McTominay',     position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      CIV:{ name:'Amad Diallo',         position:'FWD', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      TUR:{ name:'Arda Güler',          position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+      CZE:{ name:'Tomáš Souček',        position:'MID', starts:0, goals:0, assists:0, potm:0, yellow:0, red:0, cleanSheets:0 },
+    };
+
+    const CODE_TO_ISO = {
+      MEX:'mx',KOR:'kr',CZE:'cz',RSA:'za',SUI:'ch',BIH:'ba',CAN:'ca',QAT:'qa',
+      SCO:'gb-sct',MAR:'ma',BRA:'br',HAI:'ht',USA:'us',AUS:'au',TUR:'tr',PAR:'py',
+      GER:'de',CIV:'ci',ECU:'ec',CUW:'cw',SWE:'se',JPN:'jp',NED:'nl',TUN:'tn',
+      NZL:'nz',IRN:'ir',BEL:'be',EGY:'eg',URU:'uy',KSA:'sa',ESP:'es',CPV:'cv',
+      NOR:'no',FRA:'fr',SEN:'sn',IRQ:'iq',ARG:'ar',AUT:'at',JOR:'jo',ALG:'dz',
+      COL:'co',COD:'cd',POR:'pt',UZB:'uz',ENG:'gb-eng',GHA:'gh',PAN:'pa',CRO:'hr',
+    };
+    const flagUrl = (code) => {
+      const iso = CODE_TO_ISO[code];
+      return iso ? `https://flagcdn.com/24x18/${iso}.png` : '';
+    };
+
+    // Base team data: code, name, flag, group, owner
+    // Standings (W/D/L/gf/ga/pos/q) are overwritten from the live API.
+    const base = [
+      ['MEX','Mexico','🇲🇽','A',null],
+      ['KOR','South Korea','🇰🇷','A',null],
+      ['CZE','Czechia','🇨🇿','A','jake'],
+      ['RSA','South Africa','🇿🇦','A',null],
+      ['SUI','Switzerland','🇨🇭','B',null],
+      ['BIH','Bosnia & Herz.','🇧🇦','B',null],
+      ['CAN','Canada','🇨🇦','B',null],
+      ['QAT','Qatar','🇶🇦','B',null],
+      ['SCO','Scotland','🏴󠁧󠁢󠁳󠁣󠁴󠁿','C','jake'],
+      ['MAR','Morocco','🇲🇦','C','jake'],
+      ['BRA','Brazil','🇧🇷','C',null],
+      ['HAI','Haiti','🇭🇹','C',null],
+      ['USA','United States','🇺🇸','D',null],
+      ['AUS','Australia','🇦🇺','D',null],
+      ['TUR','Türkiye','🇹🇷','D','jake'],
+      ['PAR','Paraguay','🇵🇾','D',null],
+      ['GER','Germany','🇩🇪','E',null],
+      ['CIV','Ivory Coast','🇨🇮','E','jake'],
+      ['ECU','Ecuador','🇪🇨','E',null],
+      ['CUW','Curaçao','🇨🇼','E',null],
+      ['SWE','Sweden','🇸🇪','F','nate'],
+      ['JPN','Japan','🇯🇵','F',null],
+      ['NED','Netherlands','🇳🇱','F',null],
+      ['TUN','Tunisia','🇹🇳','F',null],
+      ['NZL','New Zealand','🇳🇿','G',null],
+      ['IRN','Iran','🇮🇷','G',null],
+      ['BEL','Belgium','🇧🇪','G',null],
+      ['EGY','Egypt','🇪🇬','G','nate'],
+      ['URU','Uruguay','🇺🇾','H','nate'],
+      ['KSA','Saudi Arabia','🇸🇦','H',null],
+      ['ESP','Spain','🇪🇸','H','nate'],
+      ['CPV','Cape Verde','🇨🇻','H',null],
+      ['NOR','Norway','🇳🇴','I','nate'],
+      ['FRA','France','🇫🇷','I','jake'],
+      ['SEN','Senegal','🇸🇳','I','jake'],
+      ['IRQ','Iraq','🇮🇶','I',null],
+      ['ARG','Argentina','🇦🇷','J',null],
+      ['AUT','Austria','🇦🇹','J',null],
+      ['JOR','Jordan','🇯🇴','J',null],
+      ['ALG','Algeria','🇩🇿','J',null],
+      ['COL','Colombia','🇨🇴','K','nate'],
+      ['COD','Congo DR','🇨🇩','K',null],
+      ['POR','Portugal','🇵🇹','K','jake'],
+      ['UZB','Uzbekistan','🇺🇿','K',null],
+      ['ENG','England','🏴󠁧󠁢󠁥󠁮󠁧󠁿','L','nate'],
+      ['GHA','Ghana','🇬🇭','L','nate'],
+      ['PAN','Panama','🇵🇦','L',null],
+      ['CRO','Croatia','🇭🇷','L',null],
+    ];
+
+    // Build teams object with defaults
+    const teams = {};
+    base.forEach(([code, name, flag, group, owner]) => {
+      teams[code] = { code, name, flag, flagUrl:flagUrl(code), group, owner,
+        player: PLAYER_STATS[code] || null,
+        pos:0, W:0, D:0, L:0, gf:0, ga:0, q:null, stage:'group',
+        goalsAll:0, cleanSheets:0 };
+    });
+
+    // Merge live standings from API (group-stage W/D/L/gf/ga — used for group win/draw points)
+    const { liveData } = this.state;
+    if (liveData && liveData.standings) {
+      liveData.standings.forEach(s => {
+        if (teams[s.code]) Object.assign(teams[s.code], {
+          pos: s.pos, W: s.W, D: s.D, L: s.L, gf: s.gf, ga: s.ga, q: s.q,
+        });
+      });
+    }
+    // Merge knockout stage progress
+    if (liveData && liveData.stages) {
+      liveData.stages.forEach(s => {
+        if (teams[s.code]) teams[s.code].stage = s.stage;
+      });
+    }
+    // Merge tournament-wide goals/clean-sheets (group + knockout combined)
+    if (liveData && liveData.teamTotals) {
+      Object.entries(liveData.teamTotals).forEach(([code, t]) => {
+        if (teams[code]) Object.assign(teams[code], { goalsAll: t.goalsAll, cleanSheets: t.cleanSheets });
+      });
+    }
+
+    return { P, teams };
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  fmt(n){ return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+
+  teamPoints(t){
+    // BONUS values are CUMULATIVE (total bonus at that stage, not per-round):
+    // R32+2, R16+3, QF+5, SF+8, Final+12, Winner+20 — pre-summed per stage reached.
+    const BONUS = { group:0, R32:2, R16:5, QF:10, SF:18, RU:30, W:50 };
+    return t.W*3 + t.D*1 + (BONUS[t.stage]||0) + (t.cleanSheets||0)*1 + (t.goalsAll||0)*1;
+  }
+
+  playerPoints(p){
+    if (!p) return 0;
+    const CLEAN_SHEET_BONUS = { GK:2, DEF:2, MID:1, FWD:0 };
+    return p.starts*1 + p.goals*4 + p.assists*3 + p.potm*3 - p.yellow*1 - p.red*3
+      + p.cleanSheets*(CLEAN_SHEET_BONUS[p.position]||0);
+  }
+
+  // ── renderVals ─────────────────────────────────────────────────────────────
+
+  renderVals() {
+    const { P, teams } = this.build();
+    const { liveData, loading } = this.state;
+    const tab = this.state.tab || this.props.defaultTab || 'squad';
+
+    // Renders a flag as a CSS background-image div style string.
+    // DC framework only supports {{ }} as the full value of style="...",
+    // so we embed the CDN URL directly into the computed style string.
+    const flagDiv = (url, w, h) => {
+      const base = `display:inline-block;width:${w}px;height:${h}px;flex:none;border-radius:2px;vertical-align:middle;`;
+      return url ? base + `background:url(${url}) center/cover no-repeat;` : base + 'background:#d0cfc7;';
+    };
+    const setTab = (id) => () => this.setState({ tab:id });
+    const leagueName = this.props.leagueName ?? 'World Cup Sweepstakes';
+
+    // ── Players + points ────────────────────────────────────────────────────
+    const playerList = Object.keys(P).map(id => {
+      const myTeams = Object.values(teams).filter(t => t.owner === id);
+      const total = myTeams.reduce((s,t) => s + this.teamPoints(t) + this.playerPoints(t.player), 0);
+      return { id, name:P[id].name, color:P[id].color, teams:myTeams, total };
+    });
+    playerList.sort((a,b) => b.total - a.total || a.name.localeCompare(b.name));
+
+    // Dense ranking
+    let lastTotal = null, lastRank = 0;
+    playerList.forEach((p,i) => {
+      if (p.total !== lastTotal){ lastRank = i+1; lastTotal = p.total; }
+      p.rank = lastRank;
+    });
+    const tieCount = {};
+    playerList.forEach(p => tieCount[p.rank] = (tieCount[p.rank]||0) + 1);
+    const leader = playerList[0];
+
+    const ord = (n) => n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th';
+    const stageInfo = (t) => [`${ord(t.pos)} in Group ${t.group}`, t.pos<=2 ? '#11713f' : '#9aa39b'];
+    const medal    = (r) => r===1?'🥇':r===2?'🥈':r===3?'🥉':String(r);
+
+    const squadPlayers = playerList.map(p => ({
+      name:p.name, color:p.color, totalStr:this.fmt(p.total),
+      rankLabel: medal(p.rank),
+      rankStyle:`font-family:'Anton',sans-serif;font-size:16px;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;${p.rank<=3?'background:#fff7e3;':'background:#f0eee3;color:#6f7a6f;'}`,
+      cardStyle:`background:#fff;border:1px solid ${p.rank===1?'#f2b705':'#e3e0d3'};border-radius:16px;overflow:hidden;${p.rank===1?'box-shadow:0 0 0 3px rgba(242,183,5,.18);':'box-shadow:0 1px 0 rgba(0,0,0,.02);'}`,
+      teams: p.teams.slice().sort((a,b) => a.group.localeCompare(b.group)).map(t => {
+        const [sl, sc] = stageInfo(t);
+        const tPts = this.teamPoints(t), pPts = this.playerPoints(t.player);
+        return { flagDivStyle:flagDiv(t.flagUrl,34,23), name:t.name,
+          playerName: t.player ? `⚽ ${t.player.name}` : '',
+          playerPtsStr: t.player ? `${this.fmt(pPts)} pts` : '',
+          statusLabel:sl, statusColor:sc, ptsStr:this.fmt(tPts+pPts) };
+      }),
+    }));
+
+    const board = playerList.map((p,i) => ({
+      rankLabel: medal(p.rank), color:p.color, name:p.name,
+      teamsList: p.teams.map(t => ({ flagDivStyle:flagDiv(t.flagUrl,20,13), name:t.name })),
+      totalStr: this.fmt(p.total),
+      tieLabel: tieCount[p.rank]>1 ? 'TIE' : '',
+      tieStyle: tieCount[p.rank]>1 ? 'font-size:9px;font-weight:800;letter-spacing:.5px;background:#eef0ea;color:#6f7a6f;padding:2px 5px;border-radius:4px;' : 'display:none;',
+      rowStyle:`display:grid;grid-template-columns:46px 1fr auto;gap:12px;padding:13px 18px;align-items:center;${i<playerList.length-1?'border-bottom:1px solid #f0eee3;':''}${p.rank===1?'background:#fffdf5;':''}`,
+    }));
+    const tiedLeaders  = playerList.filter(p => p.rank===1);
+    const tiebreakNote = tiedLeaders.length>1
+      ? `Right now ${tiedLeaders.map(p=>p.name).join(' & ')} are level at the top.`
+      : `${leader.name} leads outright for now.`;
+
+    // ── Fixtures ─────────────────────────────────────────────────────────────
+    const STAGE_LABELS = { R32:'Round of 32', R16:'Round of 16', QF:'Quarter-final', SF:'Semi-final', F:'Final', '3P':'3rd place' };
+
+    const getSide = (code) => {
+      const t = teams[code];
+      if (!t) return { flag:'?', flagUrl:'', name:code, owner:'', ownerColor:'' };
+      const ow = t.owner ? P[t.owner] : null;
+      return { flag:t.flag, flagUrl:t.flagUrl, name:t.name, owner:ow?ow.name:'', ownerColor:ow?ow.color:'' };
+    };
+
+    const mkGame = (f) => {
+      const [h,a,hs,as,grp,_date,status] = f;
+      const H = getSide(h), A = getSide(a);
+      const clash      = !!(H.owner && A.owner && H.owner !== A.owner);
+      const sameOwner  = !!(H.owner && A.owner && H.owner === A.owner);
+      const isLive     = status === 'LIVE';
+      const stageLabel = grp.length===1 ? `Group ${grp}` : (STAGE_LABELS[grp]||grp);
+      return {
+        home:H, away:A,
+        score:`${hs}–${as}`,
+        scoreColor: isLive ? '#16a34a' : '#13241b',
+        statusLabel: isLive ? `🟢 ${stageLabel}` : `FT · ${stageLabel}`,
+        statusColor: isLive ? '#16a34a' : '#9aa39b',
+        clash: clash || sameOwner,
+        clashText: sameOwner ? `🎭 ${H.owner} owns both` : clash ? `🔥 ${H.owner} vs ${A.owner}` : '',
+      };
+    };
+
+    const rawFx = (liveData && liveData.fixtures) ? liveData.fixtures : [];
+    const order = [], byDate = {};
+    rawFx.forEach(f => {
+      const d = f[5];
+      if (!byDate[d]){ byDate[d]=[]; order.push(d); }
+      byDate[d].push(mkGame(f));
+    });
+    order.reverse(); // most recent first
+
+    const hasLive = rawFx.some(f => f[6]==='LIVE');
+    const scoreDays = order.map((d,i) => ({
+      date:d, games:byDate[d],
+      latestLabel: (i===0 && !hasLive) ? 'LATEST' : '',
+      latestStyle: (i===0 && !hasLive) ? "font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:800;letter-spacing:.6px;background:#0a4d2c;color:#f2b705;padding:2px 8px;border-radius:20px;" : 'display:none;',
+      liveLabel:  hasLive && i===0 ? '🟢 LIVE' : '',
+      liveStyle:  hasLive && i===0 ? "font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:800;letter-spacing:.6px;background:#16a34a;color:#fff;padding:2px 8px;border-radius:20px;animation:pulse 1.5s ease-in-out infinite;" : 'display:none;',
+    }));
+
+    const clashCount = rawFx.filter(f => {
+      const ho=teams[f[0]]?.owner, ao=teams[f[1]]?.owner;
+      return ho && ao;
+    }).length;
+    const scoreSubtitle = `${rawFx.length} games played · ${clashCount} mate-vs-mate clash${clashCount!==1?'es':''} 🔥`;
+
+    // ── Upcoming fixtures ─────────────────────────────────────────────────────
+    // Reuses getSide() (flags/owners) and the same clash logic as mkGame, but
+    // shows kickoff time (in the viewer's local timezone) instead of a score.
+    const rawUp = (liveData && liveData.upcoming) ? liveData.upcoming : [];
+    const mkUpcoming = (u) => {
+      const H = getSide(u.h), A = getSide(u.a);
+      const clash     = !!(H.owner && A.owner && H.owner !== A.owner);
+      const sameOwner = !!(H.owner && A.owner && H.owner === A.owner);
+      const stageLabel = u.g.length === 1 ? `Group ${u.g}` : (STAGE_LABELS[u.g] || u.g);
+      const time = new Date(u.utc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return {
+        home: H, away: A,
+        score: time, scoreColor: '#0a4d2c',
+        statusLabel: `⏱ ${stageLabel}`, statusColor: '#9aa39b',
+        clash: clash || sameOwner,
+        clashText: sameOwner ? `🎭 ${H.owner} owns both` : clash ? `🔥 ${H.owner} vs ${A.owner}` : '',
+      };
+    };
+    const upOrder = [], upByDate = {};
+    rawUp.forEach(u => {
+      const dk = new Date(u.utc).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+      if (!upByDate[dk]) { upByDate[dk] = []; upOrder.push(dk); }
+      upByDate[dk].push(mkUpcoming(u));
+    });
+    const upcomingDays = upOrder.map(d => ({ date: d, games: upByDate[d] }));
+
+    // ── Groups ────────────────────────────────────────────────────────────────
+    const letters   = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+    const ownerChip = (t) => {
+      if (!t.owner) return ['', 'display:none;'];
+      const ow = P[t.owner];
+      return [ow.name, `font-size:9px;font-weight:800;letter-spacing:.3px;padding:2px 6px;border-radius:5px;color:#fff;white-space:nowrap;background:${ow.color};`];
+    };
+    const groups = letters.map(L => {
+      const rs = Object.values(teams).filter(t=>t.group===L).sort((a,b)=>a.pos-b.pos || a.name.localeCompare(b.name));
+      return { letter:L, rows: rs.map((t,i) => {
+        const top = t.q==='Q';
+        const gd  = t.gf - t.ga;
+        const [ol, os] = ownerChip(t);
+        return { pos:t.pos||'–', flagDivStyle:flagDiv(t.flagUrl,22,14), name:t.name,
+          MP:t.W+t.D+t.L, W:t.W, D:t.D, L:t.L,
+          GD: gd>0?'+'+gd:String(gd), Pts:t.W*3+t.D,
+          markColor: top ? '#1c9b56' : '#c2c7bd',
+          ownerLabel:ol, ownerStyle:os,
+          rowStyle:`display:grid;grid-template-columns:18px 1fr 20px 20px 20px 20px 26px 30px;gap:5px;padding:8px 13px;align-items:center;${i<rs.length-1?'border-bottom:1px solid #f4f2e9;':''}${top?'background:#f3f9f4;':''}`,
+        };
+      })};
+    });
+
+    const gamesPlayed = Object.values(teams).reduce((s,t)=>s+(t.W+t.D+t.L),0)/2;
+    const groupsSubtitle = gamesPlayed > 0
+      ? `${Math.round(gamesPlayed)} games played · group stage in progress. ● current top-two spots`
+      : 'Group stage — no results yet.';
+
+    // ── Bracket ───────────────────────────────────────────────────────────────
+    const roundNames = ['Round of 32','Round of 16','Quarter-finals','Semi-finals','Final'];
+
+    // Vertical round sections. Ties stay TBD (greyed) until the API fills in
+    // teams after the group stage; bracketLive flips on once any team is known.
+    const rawBr = (liveData && liveData.bracket) ? liveData.bracket : [];
+    const bracketLive = rawBr.some(t => t.h || t.a);
+    const bracketSubtitle = bracketLive
+      ? 'Winners advance · 🔥 marks a mate-vs-mate tie'
+      : 'The knockout draw is set once the group stage wraps up.';
+    const ROUND_DEFS = [['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['3P','3rd-place playoff'],['F','Final']];
+    const bSide = (code) => {
+      if (!code) return { name:'TBD', flagUrl:'', owner:'', ownerColor:'', tbd:true };
+      const s = getSide(code);
+      return { name:s.name, flagUrl:s.flagUrl, owner:s.owner, ownerColor:s.ownerColor, tbd:false };
+    };
+    const mkTie = (t) => {
+      const H = bSide(t.h), A = bSide(t.a);
+      const finished = t.status === 'FINISHED';
+      const live     = t.status === 'IN_PLAY';
+      const played   = finished || live;
+      const clash     = !!(H.owner && A.owner && H.owner !== A.owner);
+      const sameOwner = !!(H.owner && A.owner && H.owner === A.owner);
+      const hWin = t.winner === 'h', aWin = t.winner === 'a';
+      const nameStyle  = (S, win) => `font-weight:${win?800:700};font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${S.tbd?'#9aa39b':(win?'#0a4d2c':'#13241b')};`;
+      const ownerStyle = (S) => S.owner ? `font-size:10px;font-weight:800;color:${S.ownerColor};white-space:nowrap;flex:none;` : 'display:none;';
+      const scoreStyle = (win) => `font-family:'Anton',sans-serif;font-size:18px;flex:none;margin-left:6px;color:${win?'#0a4d2c':'#9aa39b'};${played?'':'display:none;'}`;
+      let metaLabel, metaColor;
+      if (finished)        { metaLabel = 'Full time';     metaColor = '#9aa39b'; }
+      else if (live)       { metaLabel = '🟢 Live';        metaColor = '#16a34a'; }
+      else if (t.h && t.a) { const d = new Date(t.utc); metaLabel = `${d.toLocaleDateString([], {weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`; metaColor = '#9aa39b'; }
+      else                 { metaLabel = 'To be decided'; metaColor = '#c2c7bd'; }
+      return {
+        homeFlagStyle: flagDiv(H.flagUrl,24,16), homeName: H.name, homeNameStyle: nameStyle(H,hWin),
+        homeOwner: H.owner, homeOwnerStyle: ownerStyle(H), homeScore: played ? (t.hs ?? '') : '', homeScoreStyle: scoreStyle(hWin),
+        awayFlagStyle: flagDiv(A.flagUrl,24,16), awayName: A.name, awayNameStyle: nameStyle(A,aWin),
+        awayOwner: A.owner, awayOwnerStyle: ownerStyle(A), awayScore: played ? (t.as ?? '') : '', awayScoreStyle: scoreStyle(aWin),
+        metaLabel, metaStyle:`font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:${metaColor};margin-top:8px;text-align:center;`,
+        clashText: sameOwner ? `🎭 ${H.owner} owns both` : clash ? `🔥 ${H.owner} vs ${A.owner}` : '',
+        clashStyle: (clash||sameOwner) ? 'position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#0a4d2c;color:#f2b705;font-size:9px;font-weight:800;letter-spacing:.4px;padding:2px 8px;border-radius:20px;white-space:nowrap;' : 'display:none;',
+        cardStyle: `position:relative;background:#fff;border:1px solid ${(clash||sameOwner)?'#f2d9a0':'#e3e0d3'};border-radius:12px;padding:11px 13px;${(clash||sameOwner)?'box-shadow:0 0 0 2px rgba(242,183,5,.12);':''}`,
+      };
+    };
+    const bracketRounds = ROUND_DEFS.map(([code,label]) => {
+      const ties = rawBr.filter(t => t.stage===code).map(mkTie);
+      return { code, label, ties, sub:`${ties.length} tie${ties.length!==1?'s':''}` };
+    }).filter(r => r.ties.length>0);
+
+    // ── Golden Boot (top scorers) ─────────────────────────────────────────────
+    // Tags any scorer whose team is owned by one of the 9 players.
+    const rawSc = (liveData && liveData.scorers) ? liveData.scorers : [];
+    const scorersList = rawSc.map((s, i) => {
+      const tm = teams[s.code];
+      const ow = (tm && tm.owner) ? P[tm.owner] : null;
+      return {
+        rankLabel: medal(i+1),
+        name: s.name,
+        flagDivStyle: flagDiv(tm ? tm.flagUrl : '', 24, 16),
+        teamName: tm ? tm.name : (s.code || '—'),
+        ownerLabel: ow ? ow.name : '',
+        ownerStyle: ow ? `font-size:10px;font-weight:800;color:#fff;background:${ow.color};padding:2px 6px;border-radius:5px;white-space:nowrap;flex:none;` : 'display:none;',
+        goals: s.goals,
+        rowStyle: `display:grid;grid-template-columns:42px 1fr auto;gap:12px;padding:13px 18px;align-items:center;${i<rawSc.length-1?'border-bottom:1px solid #f0eee3;':''}${i===0?'background:#fffdf5;':''}`,
+      };
+    });
+    const ownedScorers = scorersList.filter(s => s.ownerLabel).length;
+    const scorersSubtitle = scorersList.length
+      ? `Race for the Golden Boot 🥇 · ${ownedScorers} play for a mate's team`
+      : 'The Golden Boot race starts once the goals fly in.';
+
+    return {
+      leagueName, leaderName:leader.name,
+      goSquad:setTab('squad'), goTable:setTab('table'), goScores:setTab('scores'),
+      goGroups:setTab('groups'), goBracket:setTab('bracket'), goScorers:setTab('scorers'),
+      isSquad:tab==='squad', isTable:tab==='table', isScores:tab==='scores',
+      isGroups:tab==='groups', isBracket:tab==='bracket', isScorers:tab==='scorers',
+      isLoading: loading && !liveData,
+      onRefresh: () => this.refreshScores(),
+      refreshLabel: this.state.refreshing ? '⏳ Refreshing…' : '🔄 Refresh scores',
+      refreshStyle: `font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12px;letter-spacing:.3px;padding:7px 14px;border-radius:8px;border:1.5px solid ${this.state.refreshing?'#c2c7bd':'#0a4d2c'};background:${this.state.refreshing?'#f0eee3':'#0a4d2c'};color:${this.state.refreshing?'#9aa39b':'#f4f2e9'};cursor:${this.state.refreshing?'not-allowed':'pointer'};transition:opacity .15s;white-space:nowrap;`,
+      squadPlayers, board, tiebreakNote,
+      scoreDays, clashCount, scoreSubtitle, noScores: scoreDays.length===0,
+      upcomingDays, hasUpcoming: upcomingDays.length>0,
+      groups, groupsSubtitle, roundNames,
+      bracketRounds, bracketLive, bracketLocked: !bracketLive, bracketSubtitle,
+      scorersList, hasScorers: scorersList.length>0, noScorers: scorersList.length===0, scorersSubtitle,
+    };
+  }
+}
+</script>
+</body>
+</html>
